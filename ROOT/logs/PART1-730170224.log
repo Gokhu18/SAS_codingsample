@@ -1,0 +1,383 @@
+ 
+ 1          OPTIONS NONOTES NOSTIMER NOSOURCE NOSYNTAXCHECK;
+ NOTE: ODS statements in the SAS Studio environment may disable some output features.
+ 73         
+ 74         /*********************************************************************
+ 75         Project: BIOS 511 Course - Final pt 1
+ 76         
+ 77         Program name : PART1-730170224.sas
+ 78         
+ 79         Author: Eileen Yang
+ 80         
+ 81         Date created: 2019-12-03
+ 82         
+ 83         Purpose: Creates the ADSIS dataset from the SIS16 csv file.
+ 84         
+ 85         Revision history:
+ 86         
+ 87         DateAuthorRef(#)Revision
+ 88         
+ 89         searchable reference phrase: *** [#] ***;
+ 90          *********************************************************************/
+ 91         option mergenoby=error nodate nonumber;
+ 92         ods noproctitle;
+ 93         %let root= /folders/myshortcuts/MyFolders/BIOS511/ROOT;
+ 94         %let qdataPath= &root/qualtrics_data;
+ 95         %let adataPath= &root/analysis_data;
+ 96         %let outPath= &root/output;
+ 97         %let macroPath= &root/macros;
+ 98         
+ 99         libname adata "&adataPath.";
+ NOTE: Libref ADATA was successfully assigned as follows: 
+       Engine:        V9 
+       Physical Name: /folders/myshortcuts/MyFolders/BIOS511/ROOT/analysis_data
+ 100        /*********************************************************************
+ 101        SAS Code for Part # 1
+ 102         *********************************************************************/
+ 103        /*******importing the csv file to be used to create adsis dataset******/
+ 104        FILENAME REFFILE "&qdataPath./SIS16.csv";
+ 105        
+ 106        PROC IMPORT DATAFILE=REFFILE DBMS=CSV OUT=WORK.sis16;
+ 107        GETNAMES=YES;
+ 108        RUN;
+ 
+ NOTE: Import cancelled.  Output dataset WORK.SIS16 already exists.  Specify REPLACE option to overwrite it.
+ NOTE: The SAS System stopped processing this step because of errors.
+ NOTE: PROCEDURE IMPORT used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 109        
+ 
+ 
+ 110        PROC CONTENTS DATA=sis16;
+ 111        RUN;
+ 
+ NOTE: PROCEDURE CONTENTS used (Total process time):
+       real time           0.07 seconds
+       cpu time            0.07 seconds
+       
+ 
+ 112        
+ 113        proc print data=sis16 (obs=30);
+ 114        run;
+ 
+ NOTE: There were 30 observations read from the data set WORK.SIS16.
+ NOTE: PROCEDURE PRINT used (Total process time):
+       real time           0.17 seconds
+       cpu time            0.18 seconds
+       
+ 
+ 115        
+ 116        /********temporarily getting rid of the labels for q1-q16*******/
+ 117        data sis16edit;
+ 118        set sis16;
+ 119        array Q(16) Q1-Q16;
+ 120        
+ 121        do j=1 to 16;
+ 122        
+ 123        if length(Q[j])>1 then
+ 124        delete;
+ 125        
+ 126        if length(Q[j]) le 1 then
+ 127        output;
+ 128        end;
+ 129        drop j;
+ 130        run;
+ 
+ NOTE: There were 126 observations read from the data set WORK.SIS16.
+ NOTE: The data set WORK.SIS16EDIT has 2000 observations and 17 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 131        
+ 132        /********converting everything relevant into numeric variables******/
+ 133        proc sort data=sis16edit out=sis16sort;
+ 134        by responseid;
+ 135        run;
+ 
+ NOTE: There were 2000 observations read from the data set WORK.SIS16EDIT.
+ NOTE: The data set WORK.SIS16SORT has 2000 observations and 17 variables.
+ NOTE: PROCEDURE SORT used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.02 seconds
+       
+ 
+ 136        
+ 137        data sis16sortedit;
+ 138        set sis16sort;
+ 139        by responseid;
+ 140        
+ 141        if first.responseid;
+ 142        run;
+ 
+ NOTE: There were 2000 observations read from the data set WORK.SIS16SORT.
+ NOTE: The data set WORK.SIS16SORTEDIT has 125 observations and 17 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 143        
+ 144        data sis16num;
+ 145        set sis16sortedit;
+ 146        usubjid=input(responseid, 8.);
+ 147        nq1=input(q1, 8.);
+ 148        nq2=input(q2, 8.);
+ 149        nq3=input(q3, 8.);
+ 150        nq4=input(q4, 8.);
+ 151        nq5=input(q5, 8.);
+ 152        nq6=input(q6, 8.);
+ 153        nq7=input(q7, 8.);
+ 154        nq8=input(q8, 8.);
+ 155        nq9=input(q9, 8.);
+ 156        nq10=input(q10, 8.);
+ 157        nq11=input(q11, 8.);
+ 158        nq12=input(q12, 8.);
+ 159        nq13=input(q13, 8.);
+ 160        nq14=input(q14, 8.);
+ 161        nq15=input(q15, 8.);
+ 162        nq16=input(q16, 8.);
+ 163        drop q1-q16 responseid;
+ 164        run;
+ 
+ NOTE: There were 125 observations read from the data set WORK.SIS16SORTEDIT.
+ NOTE: The data set WORK.SIS16NUM has 125 observations and 17 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 165        
+ 166        proc sort data=sis16num out=sis16sort2;
+ 167        by usubjid;
+ 168        run;
+ 
+ NOTE: There were 125 observations read from the data set WORK.SIS16NUM.
+ NOTE: The data set WORK.SIS16SORT2 has 125 observations and 17 variables.
+ NOTE: PROCEDURE SORT used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 169        
+ 170        /*****************BEGIN CREATING ADSIS*****************/
+ 171        /*****usubjid zero padding, labeling q1-q16 to the corresponding survey questions*****/
+ 172        data adsis1;
+ 173        set sis16sort2;
+ 174        usubjidnew=put(usubjid, z4.);
+ 175        drop usubjid;
+ 176        rename usubjidnew=usubjid;
+ 177        
+ 178        sumvar=.;
+ 179        
+ 180        label nq1="In the past 2 weeks, how difficult was it to dress the top part of your body?"
+ 181        nq2="In the past 2 weeks, how difficult was it to bathe yourself?"
+ 182        nq3="In the past 2 weeks, how difficult was it to get to the toilet on time?"
+ 183        nq4="In the past 2 weeks, how difficult was it to control your bladder (not have an accident)?" nq5="In the past 2
+ 183      ! weeks, how difficult was it to control your bowels (not have an accident)?"
+ 184        nq6="In the past 2 weeks, how difficult was it to stand without losing balance?"
+ 185        nq7="In the past 2 weeks, how difficult was it to go shopping?"
+ 186        nq8="In the past 2 weeks, how difficult was it to do heavy household chores (e.g. vacuum, laundry or yard work)?"
+ 187        nq9="In the past 2 weeks, how difficult was it to stay sitting without losing your balance?"
+ 188        nq10="In the past 2 weeks, how difficult was it to walk without losing your balance?"
+ 189        nq11="In the past 2 weeks, how difficult was it to move from a bed to a chair?"
+ 190        nq12="In the past 2 weeks, how difficult was it to walk fast?"
+ 191        nq13="In the past 2 weeks, how difficult was it to climb one flight of stairs?"
+ 192        nq14="In the past 2 weeks, how difficult was it to walk one block?"
+ 193        nq15="In the past 2 weeks, how difficult was it to get in and out of a car?"
+ 194        nq16="In the past 2 weeks, how difficult was it to carry heavy objects (e.g. bag of groceries) with your affected
+ 194      ! hand?"
+ 195        sumvar="Stroke Impact Scale 16 Score";
+ 196        run;
+ 
+ NOTE: There were 125 observations read from the data set WORK.SIS16SORT2.
+ NOTE: The data set WORK.ADSIS1 has 125 observations and 18 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 197        
+ 198        /**************calculating SIS-16 score, temporarily named sumvar for aval later************/
+ 199        data adsis2;
+ 200        set adsis1;
+ 201        
+ 202        nmiss=cmiss(of nq1--nq16);
+ 203        max_raw=5*(16-nmiss);
+ 204        min_raw=1*(16-nmiss);
+ 205        raw_score=sum(of nq1-nq16);
+ 206        
+ 207        if nmiss le 4 then
+ 208        sumvar=round((raw_score-min_raw)/(max_raw-min_raw)*100,0.01);
+ 209        else if nmiss >4 then
+ 210        sumvar=.;
+ 211        run;
+ 
+ NOTE: There were 125 observations read from the data set WORK.ADSIS1.
+ NOTE: The data set WORK.ADSIS2 has 125 observations and 22 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 212        
+ 213        /************transposing dataset by usubjid**************/
+ 214        proc transpose data=adsis2 out=adsis2trans;
+ 215        by usubjid nmiss;
+ 216        var nq1-nq16 sumvar;
+ 217        run;
+ 
+ NOTE: There were 125 observations read from the data set WORK.ADSIS2.
+ NOTE: The data set WORK.ADSIS2TRANS has 2125 observations and 5 variables.
+ NOTE: PROCEDURE TRANSPOSE used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.02 seconds
+       
+ 
+ 218        
+ 219        /************creating qstest, aval, qstestcd, qsseq************/
+ 220        data adsis3;
+ 221        set adsis2trans;
+ 222        by usubjid;
+ 223        rename _label_=qstest col1=aval;
+ 224        length qstestcd $10.;
+ 225        
+ 226        if first.usubjid then qsseq=0;
+ 227        qsseq+1;
+ 228        
+ 229        qstestcd=cats("ITEM", put(qsseq, z2.));
+ 230        if qstestcd="ITEM17" then
+ 231        qstestcd="SIS16";
+ 232        
+ 233        if qstestcd="SIS16" then
+ 234        qstyp="DERIVED";
+ 235        else if qstestcd ne "SIS16" then
+ 236        qstyp=" ";
+ 237        run;
+ 
+ NOTE: There were 2125 observations read from the data set WORK.ADSIS2TRANS.
+ NOTE: The data set WORK.ADSIS3 has 2125 observations and 8 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 238        
+ 239        /***********creating avalc**********/
+ 240        data adsis4;
+ 241        length avalc $20.;
+ 242        set adsis3;
+ 243        
+ 244        if aval=1 and qstyp=" " then
+ 245        avalc="Could not do at all";
+ 246        else if aval=2 and qstyp=" " then
+ 247        avalc="Very difficult";
+ 248        else if aval=3 and qstyp=" " then
+ 249        avalc="Somewhat difficult";
+ 250        else if aval=4 and qstyp=" " then
+ 251        avalc="A little difficult";
+ 252        else if aval=5 and qstyp=" " then
+ 253        avalc="Not difficult at all";
+ 254        else if aval=. then
+ 255        avalc=" ";
+ 256        else if qstyp="DERIVED" then
+ 257        avalc=put(aval, 12.2);
+ 258        
+ 259        avalc2=strip(avalc);
+ 260        drop avalc;
+ 261        rename avalc2=avalc;
+ 262        run;
+ 
+ NOTE: There were 2125 observations read from the data set WORK.ADSIS3.
+ NOTE: The data set WORK.ADSIS4 has 2125 observations and 9 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 263        
+ 264        /************creating qsstat***********/
+ 265        data adsis5;
+ 266        length qsstat $50.;
+ 267        set adsis4;
+ 268        
+ 269        if aval ge 0 and qstyp="DERIVED" then
+ 270        qsstat=" ";
+ 271        
+ 272        if aval <0 and qstyp="DERIVED" then
+ 273        qsstat="NOT CALCULATED";
+ 274        run;
+ 
+ NOTE: There were 2125 observations read from the data set WORK.ADSIS4.
+ NOTE: The data set WORK.ADSIS5 has 2125 observations and 10 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 275        
+ 276        /************creating qsreasnd**********/
+ 277        data adsis6;
+ 278        set adsis5;
+ 279        
+ 280        if not missing(qsstat) and 16-nmiss le 12 then
+ 281        qsreasnd="Only "||strip(put(16-nmiss, 3.))||" Items Answered";
+ 282        run;
+ 
+ NOTE: There were 2125 observations read from the data set WORK.ADSIS5.
+ NOTE: The data set WORK.ADSIS6 has 2125 observations and 11 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.02 seconds
+       
+ 
+ 283        
+ 284        /**********tidying up the overall adsis dataset with correct labels and lengths and dropping irrelevant vars**********/
+ 285        data adsis;
+ 286        length usubjid $4. qsseq 8. qstestcd $10. qstest $200. qstyp $10. avalc $20.
+ 287        aval 8. qsstat $50. qsreasnd $50.;
+ 288        retain usubjid qsseq qstestcd qstest qstyp avalc aval qsstat qsreasnd;
+ 289        set adsis6;
+ 290        drop nmiss _name_;
+ 291        label usubjid="Unique Subject ID" qsseq="Item Sequence Number"
+ 292        qstestcd="Survey Item Code" qstest="Survey Item" qstyp="Survey Item Type"
+ 293        avalc="Analysis Value (Character)" aval="Analysis Value"
+ 294        qsstat="SIS-16 Score Status" qsreasnd="Reason SIS-16 Score Not Calculated";
+ 295        run;
+ 
+ NOTE: There were 2125 observations read from the data set WORK.ADSIS6.
+ NOTE: The data set WORK.ADSIS has 2125 observations and 9 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.02 seconds
+       
+ 
+ 296        
+ 297        /*******check contents of adsis********/
+ 298        proc contents data=adsis order=varnum;
+ 299        run;
+ 
+ NOTE: PROCEDURE CONTENTS used (Total process time):
+       real time           0.06 seconds
+       cpu time            0.06 seconds
+       
+ 
+ 300        
+ 301        data adata.adsis;
+ 302        set adsis;
+ 303        run;
+ 
+ NOTE: There were 2125 observations read from the data set WORK.ADSIS.
+ NOTE: The data set ADATA.ADSIS has 2125 observations and 9 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.06 seconds
+       cpu time            0.02 seconds
+       
+ 
+ 304        
+ 305        
+ 306        OPTIONS NONOTES NOSTIMER NOSOURCE NOSYNTAXCHECK;
+ 318        

@@ -1,0 +1,117 @@
+ 
+ 1          OPTIONS NONOTES NOSTIMER NOSOURCE NOSYNTAXCHECK;
+ NOTE: ODS statements in the SAS Studio environment may disable some output features.
+ 73         
+ 74         /*********************************************************************
+ 75         Project: BIOS 511 Course - Final Pt 3
+ 76         
+ 77         Program name : PART3-730170224.sas
+ 78         
+ 79         Author: Eileen Yang
+ 80         
+ 81         Date created: 2019-12-03
+ 82         
+ 83         Purpose: Final Part 3 - calling the freq macro created in
+ 84           "PART3-730170224.sas" to perform frequency analyses
+ 85           on aval for the different survey items
+ 86           in ADSIS dataset.
+ 87         
+ 88         Revision history:
+ 89         
+ 90         DateAuthorRef(#)Revision
+ 91         
+ 92         searchable reference phrase: *** [#] ***;
+ 93          *********************************************************************/
+ 94         option mergenoby=error nodate nonumber;
+ 95         ods noproctitle;
+ 96         %let root= /folders/myshortcuts/MyFolders/BIOS511/ROOT;
+ 97         %let qdataPath= &root/qualtrics_data;
+ 98         %let adataPath= &root/analysis_data;
+ 99         %let outPath= &root/output;
+ 100        %let macroPath= &root/macros;
+ 101        
+ 102        libname adata "&adataPath.";
+ NOTE: Libref ADATA was successfully assigned as follows: 
+       Engine:        V9 
+       Physical Name: /folders/myshortcuts/MyFolders/BIOS511/ROOT/analysis_data
+ 103        /*********************************************************************
+ 104        SAS Code for Part # 3
+ 105         *********************************************************************/
+ 106        ods pdf file="&outPath./PART3-730170224.pdf";
+ NOTE: Writing ODS PDF output to DISK destination "/folders/myshortcuts/MyFolders/BIOS511/ROOT/output/PART3-730170224.pdf", 
+       printer "PDF".
+ 107        proc format;
+ 108        
+ 108      !  value fmtA
+ 109         1-3 = 'At Least Somewhat Difficult'
+ 110         4= 'A Little Difficult'
+ 111         5= 'No Difficulty';
+ NOTE: Format FMTA is already on the library WORK.FORMATS.
+ NOTE: Format FMTA has been output.
+ 112        run;
+ 
+ NOTE: PROCEDURE FORMAT used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 113        
+ 114        %include "&macroPath./PART3-FREQ-730170224.sas";
+ 200        
+ 201        %freq(cd=ITEM01, fmt=FMTA);
+ 
+ NOTE: There were 125 observations read from the data set ADATA.ADSIS.
+       WHERE qstestcd='ITEM01';
+ NOTE: The data set WORK.ADSIS_FREQ has 125 observations and 9 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.02 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 
+ NOTE: There were 125 observations read from the data set WORK.ADSIS_FREQ.
+ NOTE: The data set WORK.FREQPRINT has 3 observations and 3 variables.
+ NOTE: PROCEDURE FREQ used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 
+ NOTE: There were 3 observations read from the data set WORK.FREQPRINT.
+ NOTE: PROCEDURE PRINT used (Total process time):
+       real time           0.04 seconds
+       cpu time            0.04 seconds
+       
+ 
+ 202        %freq(cd=ITEM02, fmt=NONE);
+ 
+ NOTE: There were 125 observations read from the data set ADATA.ADSIS.
+       WHERE qstestcd='ITEM02';
+ NOTE: The data set WORK.ADSIS_FREQ has 125 observations and 9 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.01 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 
+ NOTE: There were 125 observations read from the data set WORK.ADSIS_FREQ.
+ NOTE: The data set WORK.FREQPRINT has 6 observations and 3 variables.
+ NOTE: PROCEDURE FREQ used (Total process time):
+       real time           0.00 seconds
+       cpu time            0.00 seconds
+       
+ 
+ 
+ NOTE: There were 6 observations read from the data set WORK.FREQPRINT.
+ NOTE: PROCEDURE PRINT used (Total process time):
+       real time           0.03 seconds
+       cpu time            0.04 seconds
+       
+ 
+ 203        
+ 204        ods pdf close;
+ NOTE: ODS PDF printed 2 pages to /folders/myshortcuts/MyFolders/BIOS511/ROOT/output/PART3-730170224.pdf.
+ 205        
+ 206        
+ 207        OPTIONS NONOTES NOSTIMER NOSOURCE NOSYNTAXCHECK;
+ 219        

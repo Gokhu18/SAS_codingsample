@@ -1,0 +1,102 @@
+ 
+ 1          OPTIONS NONOTES NOSTIMER NOSOURCE NOSYNTAXCHECK;
+ NOTE: ODS statements in the SAS Studio environment may disable some output features.
+ 73         
+ 74         /*********************************************************************
+ 75         Project: BIOS 511 Course - Final Pt 2
+ 76         
+ 77         Program name : PART2-730170224.sas
+ 78         
+ 79         Author: Eileen Yang
+ 80         
+ 81         Date created: 2019-12-03
+ 82         
+ 83         Purpose: Final Part 2 - creating histogram and boxplot for
+ 84           SIS-16 values and printing to one pdf file named
+ 85           PART2-730170224.pdf.
+ 86         
+ 87         Revision history:
+ 88         
+ 89         DateAuthorRef(#)Revision
+ 90         
+ 91         searchable reference phrase: *** [#] ***;
+ 92          *********************************************************************/
+ 93         option mergenoby=error nodate nonumber;
+ 94         ods noproctitle;
+ 95         %let root= /folders/myshortcuts/MyFolders/BIOS511/ROOT;
+ 96         %let qdataPath= &root/qualtrics_data;
+ 97         %let adataPath= &root/analysis_data;
+ 98         %let outPath= &root/output;
+ 99         %let macroPath= &root/macros;
+ 100        
+ 101        libname adata "&adataPath.";
+ NOTE: Libref ADATA was successfully assigned as follows: 
+       Engine:        V9 
+       Physical Name: /folders/myshortcuts/MyFolders/BIOS511/ROOT/analysis_data
+ 102        /*********************************************************************
+ 103        SAS Code for Part # 2
+ 104         *********************************************************************/
+ 105        data adsis_plot;
+ 106        set adata.adsis;
+ 107        by usubjid;
+ 108        if last.usubjid;
+ 109        run;
+ 
+ NOTE: There were 2125 observations read from the data set ADATA.ADSIS.
+ NOTE: The data set WORK.ADSIS_PLOT has 125 observations and 9 variables.
+ NOTE: DATA statement used (Total process time):
+       real time           0.05 seconds
+       cpu time            0.01 seconds
+       
+ 
+ 110        
+ 111        ods pdf file="&outPath./PART2-730170224.pdf" startpage=no;
+ NOTE: Writing ODS PDF output to DISK destination "/folders/myshortcuts/MyFolders/BIOS511/ROOT/output/PART2-730170224.pdf", 
+       printer "PDF".
+ 112        
+ 113        ods select sgplot;
+ 114        ods graphics / height=4in width=6in border=off;
+ 115        title "Distribution of SIS-16 Scores";
+ 116        proc sgplot data=adsis_plot;
+ 117        histogram aval / fillattrs=(color=lightred)
+ 118        dataskin=crisp scale=proportion;
+ 119        label aval = " ";
+ 120        xaxis label= " ";
+ 121        yaxis grid;
+ 122        run;
+ 
+ NOTE: PROCEDURE SGPLOT used (Total process time):
+       real time           1.06 seconds
+       cpu time            0.25 seconds
+       
+ NOTE: There were 125 observations read from the data set WORK.ADSIS_PLOT.
+ 
+ 123        
+ 124        ods select sgplot;
+ 125        ods graphics / height=4in width=6in border=off;
+ 126        title " ";
+ 127        proc sgplot data=adsis_plot;
+ 128        hbox aval / dataskin=crisp
+ 129        fillattrs=(color=lightred)
+ 130        whiskerattrs=(pattern=dash) meanattrs=(symbol=circlefilled)
+ 131        outlierattrs=(symbol=x);
+ 132        label aval = " ";
+ 133        xaxis label= " " grid;
+ 134        run;
+ 
+ NOTE: PROCEDURE SGPLOT used (Total process time):
+       real time           0.48 seconds
+       cpu time            0.11 seconds
+       
+ NOTE: There were 125 observations read from the data set WORK.ADSIS_PLOT.
+ 
+ 135        
+ 136        ods pdf close;
+ NOTE: ODS PDF printed 1 page to /folders/myshortcuts/MyFolders/BIOS511/ROOT/output/PART2-730170224.pdf.
+ 137        
+ 138        
+ 139        
+ 140        
+ 141        
+ 142        OPTIONS NONOTES NOSTIMER NOSOURCE NOSYNTAXCHECK;
+ 154        
